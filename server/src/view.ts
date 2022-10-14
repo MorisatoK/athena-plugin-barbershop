@@ -1,11 +1,11 @@
 import * as alt from 'alt-server';
-import { Athena } from '../../../../server/api/athena';
-import { EQUIPMENT_TYPE } from '../../../../shared/enums/equipmentType';
-import { SYSTEM_EVENTS } from '../../../../shared/enums/system';
-import { Appearance } from '../../../../shared/interfaces/appearance';
-import { ClothingComponent } from '../../../../shared/interfaces/clothing';
-import { Item } from '../../../../shared/interfaces/item';
-import { deepCloneObject } from '../../../../shared/utility/deepCopy';
+import { Athena } from '@AthenaServer/api/athena';
+import { EQUIPMENT_TYPE } from '@AthenaShared/enums/equipmentType';
+import { SYSTEM_EVENTS } from '@AthenaShared/enums/system';
+import { Appearance } from '@AthenaShared/interfaces/appearance';
+import { ClothingComponent } from '@AthenaShared/interfaces/clothing';
+import { Item } from '@AthenaShared/interfaces/item';
+import { deepCloneObject } from '@AthenaShared/utility/deepCopy';
 import { BarbershopEvents } from '../../shared/events';
 import { BarbershopData } from '../../shared/interfaces';
 import { BARBER_SHOP_LOCATIONS } from '../../shared/locations';
@@ -37,7 +37,14 @@ export class InternalFunctions {
         alt.on('playerDisconnect', InternalFunctions.handleDisconnect);
 
         for (const pos of BARBER_SHOP_LOCATIONS) {
-            Athena.controllers.blip.append({ pos, color: 43, scale: 1, shortRange: true, text: BARBER_SHOP_LOCALE.BARBERSHOP_LABEL, sprite: 71 });
+            Athena.controllers.blip.append({
+                pos,
+                color: 43,
+                scale: 1,
+                shortRange: true,
+                text: BARBER_SHOP_LOCALE.BARBERSHOP_LABEL,
+                sprite: 71,
+            });
             Athena.controllers.marker.append({ pos, color: new alt.RGBA(0, 255, 0, 100), type: 1 });
             Athena.controllers.interaction.add({ position: pos, callback: BarbershopView.open, isPlayerOnly: true });
         }
@@ -179,7 +186,10 @@ export class BarbershopView {
         }
 
         offers[hairDresserID] = customerID;
-        Athena.player.emit.message(hairDresser, `${BARBER_SHOP_LOCALE.HAVE_OFFERED} ${customer.data.name} ${BARBER_SHOP_LOCALE.AS_HAIRCUT_SESSION}`);
+        Athena.player.emit.message(
+            hairDresser,
+            `${BARBER_SHOP_LOCALE.HAVE_OFFERED} ${customer.data.name} ${BARBER_SHOP_LOCALE.AS_HAIRCUT_SESSION}`,
+        );
         Athena.player.emit.message(
             customer,
             `${BARBER_SHOP_LOCALE.HAVE_BEEN_OFFERED_A_HAIRCUT_SESSION_BY} ${hairDresser.data.name}. /hairaccept ${hairDresserID}`,

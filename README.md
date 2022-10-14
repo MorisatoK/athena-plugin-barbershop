@@ -1,6 +1,6 @@
 # Athena Plugin - Barbershop
 
-A simple barbershop plugin for the Athena Framework compatible with `3.9.0` of the [Athena Framework](https://athenaframework.com/).
+A simple barbershop plugin for the Athena Framework compatible with `4.0.0` of the [Athena Framework](https://athenaframework.com/).
 
 ## Installation
 
@@ -16,12 +16,12 @@ cd src/core/plugins
 **SSH**
 
 ```
-git clone git@github.com:Stuyk/athena-plugin-barbershop.git
+git clone git@github.com:Athena-Roleplay-Framework/athena-plugin-barbershop.git
 ```
 
 **HTTPS**
 ```
-git clone https://github.com/Stuyk/athena-plugin-barbershop
+git clone https://github.com/Athena-Roleplay-Framework/athena-plugin-barbershop
 ```
 
 4. Start the Server
