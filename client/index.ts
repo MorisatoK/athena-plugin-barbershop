@@ -4,16 +4,19 @@ import { AthenaClient } from '@AthenaClient/api/athena';
 import { WebViewController } from '@AthenaClient/extensions/view2';
 import ViewModel from '@AthenaClient/models/viewModel';
 import { isAnyMenuOpen } from '@AthenaClient/utility/menus';
+import { distance } from '../../../shared/utility/vector';
 import { BarbershopEvents } from '../shared/events';
 import { BarbershopData } from '../shared/interfaces';
 
 const Z_POS_ADD = 0.62;
-const FOV = 16;
+const FOV = 20;
 const PAGE_NAME = 'Barbershop';
 let isSelfService = false;
 let currentData: BarbershopData;
 let camera: number;
 let hasRegisteredOnce = false;
+let cameraOrbit = [];
+let camIdx = 0;
 
 class BarbershopView implements ViewModel {
     /**
@@ -119,6 +122,62 @@ class BarbershopView implements ViewModel {
         );
 
         native.taskLookAtCoord(alt.Player.local.scriptID, fwdPos.x, fwdPos.y, fwdPos.z, -1, 0, 2);
+
+        this.setupCameraOrbit();
+        alt.on('keydown', this.handleKeyPressed);
+    }
+
+    static setupCameraOrbit() {
+        const pos = alt.Player.local.pos;
+        const fwdVector = native.getEntityForwardVector(alt.Player.local.scriptID);
+        const fwdPos = {
+            x: pos.x + fwdVector.x * 2,
+            y: pos.y + fwdVector.y * 2,
+            z: pos.z,
+        };
+        const radius = distance(pos, fwdPos);
+        const cx = pos.x;
+        const cy = pos.y;
+        const angleRad = Math.atan2(fwdPos.y - cy, fwdPos.x - cx);
+        const angle = ((angleRad > 0 ? angleRad : 2 * Math.PI + angleRad) * 360) / (2 * Math.PI);
+        const step = 22.5;
+
+        for (let i = 0; i < 360 / step - 1; i++) {
+            let stepAngle = angle + i * step;
+
+            if (stepAngle > 360) {
+                stepAngle -= 360;
+            }
+
+            const point = this.pointsOnCircle(radius, stepAngle, cx, cy);
+            cameraOrbit.push(point);
+        }
+    }
+
+    static handleKeyPressed(key: alt.KeyCode) {
+        if (key === 65 || key === 68) {
+            if (key === 65) {
+                if (camIdx === cameraOrbit.length - 1) {
+                    camIdx = 0;
+                } else {
+                    camIdx++;
+                }
+            }
+            if (key === 68) {
+                if (camIdx === 0) {
+                    camIdx = cameraOrbit.length - 1;
+                } else {
+                    camIdx--;
+                }
+            }
+
+            native.setCamCoord(
+                camera,
+                cameraOrbit[camIdx].x,
+                cameraOrbit[camIdx].y,
+                alt.Player.local.pos.z + Z_POS_ADD,
+            );
+        }
     }
 
     static destroyCamera() {
@@ -126,9 +185,28 @@ class BarbershopView implements ViewModel {
             native.destroyAllCams(true);
             native.destroyCam(camera, true);
             native.renderScriptCams(false, false, 0, false, false, 0);
+            alt.off('keydown', this.handleKeyPressed);
         } catch (err) {}
 
         camera = undefined;
+        cameraOrbit = [];
+        camIdx = 0;
+    }
+
+    /**
+     * Calculate x and y in circle's circumference
+     * @param {number} radius - The circle's radius
+     * @param {number} angle - The angle in degrees
+     * @param {number} cx - The circle's origin x
+     * @param {number} cy - The circle's origin y
+     * @returns {Object[x: number, y: number]} The calculated x and y
+     */
+    static pointsOnCircle(radius: number, angle: number, cx: number, cy: number) {
+        angle = angle * (Math.PI / 180); // Convert from Degrees to Radians
+        const x = cx + radius * Math.sin(angle);
+        const y = cy + radius * Math.cos(angle);
+
+        return { x: x, y: y };
     }
 
     /**

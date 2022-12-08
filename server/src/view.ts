@@ -10,7 +10,6 @@ import { BarbershopEvents } from '../../shared/events';
 import { BarbershopData } from '../../shared/interfaces';
 import { BARBER_SHOP_LOCATIONS } from '../../shared/locations';
 import { BARBER_SHOP_LOCALE } from '../../shared/locales';
-import { hairOverlayInfo } from '../../shared/overlays';
 
 /**
  * Offer to cut hair for other players.
@@ -107,9 +106,7 @@ export class BarbershopView {
                 appearance.hair = data.hair;
                 appearance.hairColor1 = data.hairColor1;
                 appearance.hairColor2 = data.hairColor2;
-                appearance.hairOverlay = data.hairFullName
-                    ? hairOverlayInfo[data.hairFullName]
-                    : { collection: '', overlay: '' };
+                appearance.hairOverlay = data.hairOverlay;
                 appearance.eyebrows = data.eyeIndex;
                 appearance.eyebrowsOpacity = data.eyeOpacity;
                 appearance.eyebrowsColor1 = data.eyeColor1;
@@ -308,8 +305,7 @@ export class BarbershopView {
             return;
         }
 
-        const hairOverlay = hairOverlayInfo[data.hairFullName];
-        alt.emitClient(customer, SYSTEM_EVENTS.SET_PLAYER_DECORATIONS, [hairOverlay]);
+        alt.emitClient(customer, SYSTEM_EVENTS.SET_PLAYER_DECORATIONS, [data.hairOverlay]);
 
         if (data.dlc === 0) {
             customer.setClothes(2, data.hair, 0, 0);

@@ -9,5 +9,5 @@ PluginSystem.registerPlugin(PLUGIN_NAME, () => {
     BarbershopView.init();
     BarbershopCommands.init();
 
-    alt.log(`~lg~CORE ==> ${PLUGIN_NAME} Loaded.`);
+    alt.log(`~lg~${PLUGIN_NAME} Loaded.`);
 });

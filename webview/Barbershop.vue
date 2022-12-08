@@ -48,25 +48,23 @@
                         @decrement-index="decrementIndex"
                         @increment-index="incrementIndex"
                     />
+                    <HairstyleComponent
+                        :sex="sex"
+                        :currentIndex="hairIndex"
+                        @decrement-index="decrementIndex"
+                        @increment-index="incrementIndex"
+                        @setIndex="setHairIndex"
+                        v-if="navigation[navIndex].isHair"
+                    />
                 </div>
             </div>
             <div class="right-section"></div>
-        </div>
-        <div class="bottom-section">
-            <HairstyleComponent
-                :sex="sex"
-                :currentIndex="hairIndex"
-                @setIndex="setHairIndex"
-                v-if="navigation[navIndex].isHair"
-            />
         </div>
     </div>
 </template>
 
 <script lang="ts">
 import { defineComponent, defineAsyncComponent, nextTick } from 'vue';
-import { maleHair } from '../shared/maleHair';
-import { femaleHair } from '../shared/femaleHair';
 import { BarbershopEvents } from '../shared/events';
 import { BarbershopData } from '../shared/interfaces';
 import { BARBER_SHOP_LOCALE } from '../shared/locales';
@@ -74,9 +72,11 @@ import ColorComponentVue from './components/ColorComponent.vue';
 import HairstyleComponentVue from './components/HairstyleComponent.vue';
 import EyeComponentVue from './components/EyeComponent.vue';
 import BeardComponentVue from './components/BeardComponent.vue';
+import { hairStyles } from '@AthenaShared/information/hairStyles';
+import { HairOverlay, HairStyle } from '@AthenaShared/interfaces/hairStyles';
 
-import ResolvePath from '../../../../../src-webviews/src/utility/pathResolver';
-import WebViewEvents from '../../../../../src-webviews/src/utility/webViewEvents';
+import ResolvePath from '@ViewUtility/pathResolver';
+import WebViewEvents from '@ViewUtility/webViewEvents';
 
 export const ComponentName = 'Barbershop';
 export default defineComponent({
@@ -153,7 +153,7 @@ export default defineComponent({
             this.update();
         },
         incrementIndex(whatToIncrement: string, maxLength: number, incrementValue = 1) {
-            if (this[whatToIncrement] + incrementValue >= maxLength) {
+            if (this[whatToIncrement] + incrementValue > maxLength) {
                 this[whatToIncrement] = 0;
             } else {
                 this[whatToIncrement] += incrementValue;
@@ -184,10 +184,14 @@ export default defineComponent({
         },
         async setData(data: BarbershopData) {
             this.sex = data.sex;
-            this.hairStyles = data.sex === 0 ? femaleHair : maleHair;
-            const hairStyleIndex = this.hairStyles.findIndex((x) =>
-                x.includes(`2-${data.dlc}-${data.sex === 0 ? 'female' : 'male'}-${data.hair}`),
+            this.hairStyles =
+                data.sex === 0
+                    ? this.getNonGreylistedHair(hairStyles.female)
+                    : this.getNonGreylistedHair(hairStyles.male);
+            const hairStyleIndex = this.hairStyles.findIndex(
+                (style: HairStyle) => style.dlcId === data.hair && style.dlcHash === data.dlc,
             );
+
             this.setHairIndex(hairStyleIndex === -1 ? 0 : hairStyleIndex);
 
             for (const key of Object.keys(data)) {
@@ -215,19 +219,26 @@ export default defineComponent({
             this.setNavIndex(this.navIndex);
             this.ready = true;
         },
+        getNonGreylistedHair(styles: HairStyle[]): HairStyle[] {
+            return styles.filter((style: HairStyle) => style.greylist === false);
+        },
+
         getHairStyleDlc(): number {
-            return parseInt(this.hairStyles[this.hairIndex].split('-')[1]);
+            return this.hairStyles[this.hairIndex].dlcHash;
         },
         getHairStyle(): number {
-            return parseInt(this.hairStyles[this.hairIndex].split('-')[3]);
+            return this.hairStyles[this.hairIndex].dlcId;
+        },
+        getHairOverlay(): HairOverlay {
+            return this.hairStyles[this.hairIndex].hairOverlay;
         },
         update(shouldSave = false) {
             const updateInformation: BarbershopData = {
                 dlc: this.getHairStyleDlc(),
                 hair: this.getHairStyle(),
+                hairOverlay: this.getHairOverlay(),
                 hairColor1: this.hairColor1,
                 hairColor2: this.hairColor2,
-                hairFullName: this.hairStyles[this.hairIndex],
                 eyeOpacity: this.eyeOpacity,
                 eyeIndex: this.eyeIndex,
                 eyeColor1: this.eyeColor1,
@@ -303,15 +314,6 @@ export default defineComponent({
 
     min-width: 100vw;
     max-width: 100vw;
-}
-
-.barbershop-frame .bottom-section {
-    display: flex;
-    flex-direction: column;
-    min-width: 100vw;
-    max-width: 100vw;
-    min-height: 175px;
-    max-height: 175px;
 }
 
 .barbershop-frame .left-section {
